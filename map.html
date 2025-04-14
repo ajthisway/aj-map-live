@@ -63,8 +63,10 @@
 
         // Zoom to most recent point
         const lastCoord = coords[coords.length - 1];
-        map.setCenter(lastCoord);
-        map.setZoom(13);
+        map.jumpTo({
+          center: lastCoord,
+          zoom: 13
+        });
       });
     });
 </script>
