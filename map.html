@@ -7,6 +7,10 @@
   <style>
     body, html { margin: 0; padding: 0; height: 100%; }
     #map { width: 100%; height: 100%; }
+    .mapboxgl-popup-content {
+    font-size: 14px;
+    line-height: 1.4;
+  }
   </style>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
@@ -43,10 +47,18 @@
     </div>
   `;
 
+  const html = `
+    <div style="font-family: sans-serif; padding-right: 10px; max-width: 180px;">
+      <strong>AJ's Location</strong><br/>
+      ${label}
+    </div>
+  `;
+
   new mapboxgl.Marker()
     .setLngLat(coord)
     .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(html))
     .addTo(map);
+
 });
 
 
