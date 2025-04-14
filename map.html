@@ -32,15 +32,23 @@
       if (coords.length === 0) return;
 
   data.forEach(point => {
-      const coord = [parseFloat(point.lon), parseFloat(point.lat)];
-      const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
-      const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    const coord = [parseFloat(point.lon), parseFloat(point.lat)];
+    const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
+    const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+  const html = `
+    <div style="font-family: sans-serif; padding-right: 10px;">
+      <strong>AJ's Location</strong><br/>
+      ${label}
+    </div>
+  `;
 
   new mapboxgl.Marker()
     .setLngLat(coord)
-    .setPopup(new mapboxgl.Popup().setText(label))
+    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(html))
     .addTo(map);
 });
+
 
 
       if (coords.length > 1) {
