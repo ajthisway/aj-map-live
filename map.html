@@ -31,9 +31,17 @@
       
       if (coords.length === 0) return;
 
-      coords.forEach(coord => {
-        new mapboxgl.Marker().setLngLat(coord).addTo(map);
-      });
+  data.forEach(point => {
+      const coord = [parseFloat(point.lon), parseFloat(point.lat)];
+      const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
+      const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+  new mapboxgl.Marker()
+    .setLngLat(coord)
+    .setPopup(new mapboxgl.Popup().setText(label))
+    .addTo(map);
+});
+
 
       if (coords.length > 1) {
         map.addSource('route', {
