@@ -1,26 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>AJ's Real-Time GPS Tracker</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
-    #map { width: 100%; height: 100%; }
-    .mapboxgl-popup-content {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-  </style>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-</head>
-<body>
-<div id="map"></div>
-
 <script>
   mapboxgl.accessToken = 'pk.eyJ1IjoiYWp0aGlzd2F5IiwiYSI6ImNtOHZlZmc2YTB2OTEybnI1ZGcyemtsbmoifQ.g2z2Lp2Ko0SsAnV7BdYyYg';
-  
+
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v11',
@@ -32,37 +12,27 @@
     .then(res => res.json())
     .then(data => {
       const coords = data.map(p => [parseFloat(p.lon), parseFloat(p.lat)]);
-      
       if (coords.length === 0) return;
 
-  data.forEach(point => {
-    const coord = [parseFloat(point.lon), parseFloat(point.lat)];
-    const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
-    const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+      data.forEach(point => {
+        const coord = [parseFloat(point.lon), parseFloat(point.lat)];
+        const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
+        const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
-  const html = `
-    <div style="font-family: sans-serif; padding-right: 10px;">
-      <strong>AJ's Location</strong><br/>
-      ${label}
-    </div>
-  `;
+        const html = `
+          <div style="font-family: sans-serif; padding-right: 10px; max-width: 180px;">
+            <strong>AJ's Location</strong><br/>
+            ${label}
+          </div>
+        `;
 
-  const html = `
-    <div style="font-family: sans-serif; padding-right: 10px; max-width: 180px;">
-      <strong>AJ's Location</strong><br/>
-      ${label}
-    </div>
-  `;
+        new mapboxgl.Marker()
+          .setLngLat(coord)
+          .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(html))
+          .addTo(map);
+      });
 
-  new mapboxgl.Marker()
-    .setLngLat(coord)
-    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(html))
-    .addTo(map);
-
-});
-
-
-
+      // Add line between points
       if (coords.length > 1) {
         map.addSource('route', {
           type: 'geojson',
@@ -82,15 +52,11 @@
           layout: { 'line-join': 'round', 'line-cap': 'round' },
           paint: { 'line-color': '#ff0000', 'line-width': 3 }
         });
-
-        map.fitBounds(coords.reduce((b, c) => b.extend(c), new mapboxgl.LngLatBounds(coords[0], coords[0])), {
-          padding: 50
-        });
-      } else {
-        map.setCenter(coords[0]);
-        map.setZoom(12);
       }
+
+      // Zoom directly to the latest point
+      const lastCoord = coords[coords.length - 1];
+      map.setCenter(lastCoord);
+      map.setZoom(13);
     });
 </script>
-</body>
-</html>
