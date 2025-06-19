@@ -29,17 +29,38 @@
   });
 
   Promise.all([
-    fetch('https://raw.githubusercontent.com/ajthisway/aj-map-live/main/locations_archive.json').then(res => res.json()),
-    fetch('https://raw.githubusercontent.com/ajthisway/aj-map-live/main/locations.json').then(res => res.json())
+    fetch('https://raw.githubusercontent.com/ajthisway/aj-map-live/main/locations.json').then(res => res.json()),
+    fetch('https://raw.githubusercontent.com/ajthisway/aj-map-live/main/locations_archive.json').then(res => res.json())
   ])
-  .then(([archiveData, liveData]) => {
-    const data = [...archiveData, ...liveData];
+  .then(([liveData, archiveData]) => {
+    const combined = [...archiveData, ...liveData];
 
-    if (!data || data.length === 0) return;
+    // Sort chronologically
+    combined.sort((a, b) => {
+      const t1 = typeof a.timestamp === "string" ? Date.parse(a.timestamp) : a.timestamp * 1000;
+      const t2 = typeof b.timestamp === "string" ? Date.parse(b.timestamp) : b.timestamp * 1000;
+      return t1 - t2;
+    });
 
-    const coords = data.map(p => [parseFloat(p.lon), parseFloat(p.lat)]);
+    // Filter to one point every 10 minutes
+    let filteredData = [];
+    let lastTimestamp = 0;
 
-    data.forEach(point => {
+    combined.forEach(point => {
+      let ts = point.timestamp;
+      if (typeof ts === "string") {
+        ts = Date.parse(ts) / 1000;
+      }
+      if (!lastTimestamp || ts - lastTimestamp >= 599) {
+        filteredData.push(point);
+        lastTimestamp = ts;
+      }
+    });
+
+    const coords = filteredData.map(p => [parseFloat(p.lon), parseFloat(p.lat)]);
+    if (coords.length === 0) return;
+
+    filteredData.forEach(point => {
       const coord = [parseFloat(point.lon), parseFloat(point.lat)];
       const date = new Date(isNaN(point.timestamp) ? point.timestamp : point.timestamp * 1000);
       const label = date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -58,30 +79,32 @@
     });
 
     map.on('load', () => {
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: coords
+      if (coords.length > 1) {
+        map.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: coords
+            }
           }
-        }
-      });
+        });
 
-      map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ff0000',
-          'line-width': 4
-        }
-      });
+        map.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#ff0000',
+            'line-width': 4
+          }
+        });
+      }
 
       const lastCoord = coords[coords.length - 1];
       map.jumpTo({
